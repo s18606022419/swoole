@@ -15,8 +15,9 @@ class WebSocket
 
     public function __construct()
     {
-        $this->server = new \swoole_websocket_server('0.0.0.0', 9505);
+        $this->server = new \swoole_websocket_server('0.0.0.0', 9500);
     }
+
 
     /**
      * 启动webSocket.
@@ -35,16 +36,33 @@ class WebSocket
                 'package_body_offset' => 4,
                 'package_length_type' => 'N',
                 'package_max_length' => 2465792, //单位字节, TODO: 计算实际需求调整大小
-                'debug_mode' => 1,
-                'log_file' => '/root/ws.log',
             )
         );
-
+        $this->server->on('Request', array($this, 'onRequest'));  
         $this->server->on('Open', array($this, 'onOpen'));
         $this->server->on('Message', array($this, 'onMessage'));
         $this->server->on('Close', array($this, 'onClose'));
-
+        
         $this->server->start();
+    }
+
+    /*
+    * 发送
+    */
+    public function onRequest($request, $response){
+        if(!isset($request->get)){
+            $response->end("params is null");
+            return;
+        }
+        @$wsId=$request->get['wsId'];
+        @$data=$request->get['data'];
+
+        if(empty($wsId)||empty($data)){
+            $response->end("params is null");
+        }
+        $this->server->push(intval($wsId),$data);
+        $response->end("success");
+        return;
     }
 
     /**
@@ -69,14 +87,7 @@ class WebSocket
      */
     public function onMessage($server, $frame)
     {
-        $data = json_decode($frame->data);
-        $webClientId = $data->wsId;
-        $info = json_encode($data->info);
-
-        // 将接收info信息发给被扫码报到的web客户端
-        $server->push($webClientId, $info);
-
-        print_r(date('Y-m-d H:i:s', time()).'--------Get Message from: '.$frame->fd."\n");
+        //print_r(date('Y-m-d H:i:s', time()).'--------Get Message from: '.$frame->fd."\n");
     }
 
     /**
