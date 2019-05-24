@@ -1,4 +1,4 @@
-FROM 630176705/mywork:swoole
+FROM registry.fzhxkj.com/uyiban-service-env
 
 COPY ./SocketServer.php /var/www/html/
 

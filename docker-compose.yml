@@ -1,21 +1,23 @@
 version: '2'
 services:
     socket:
-      image: registry.fzhxkj.com/uyiban-freshmanlive-socket:0.3
+      image: 630176705/mywork：swoole
       restart: always
+      volumes:
+       - $PWD:/var/www/html
       ports:
        - 9500:9500
       labels:
           io.rancher.scheduler.affinity:host_label: env=test
 
-    proxy:
-      image: registry.fzhxkj.com/uyiban-freshmanlive-socket-proxy:0.8
-      restart: always
-      volumes:
-         - /etc/letsencrypt:/etc/letsencrypt
-      links:
-         - socket
-      ports:
-       - 9505:9505
-      labels:
-          io.rancher.scheduler.affinity:host_label: env=test
+#    proxy:
+#      image: registry.fzhxkj.com/uyiban-freshmanlive-socket-proxy:0.8
+#      restart: always
+#      volumes:
+#         - /etc/letsencrypt:/etc/letsencrypt
+#      links:
+#         - socket
+#      ports:
+#       - 9505:9505
+#      labels:
+#          io.rancher.scheduler.affinity:host_label: env=test

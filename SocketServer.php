@@ -13,11 +13,12 @@ class WebSocket
 {
     private $server = null;
 
+    private $connectList = [];
+
     public function __construct()
     {
         $this->server = new \swoole_websocket_server('0.0.0.0', 9500);
     }
-
 
     /**
      * 启动webSocket.
@@ -29,7 +30,7 @@ class WebSocket
                 'daemonize' => 0,
                 'max_request' => 5000,
                 'max_conn' => 1024,
-                'worker_num' => 32,
+                'worker_num' => 1,
                 'dispatch_mode' => 2,
                 'open_length_check' => true,
                 'package_length_offset' => 0,
@@ -38,7 +39,6 @@ class WebSocket
                 'package_max_length' => 2465792, //单位字节, TODO: 计算实际需求调整大小
             )
         );
-        $this->server->on('Request', array($this, 'onRequest'));  
         $this->server->on('Open', array($this, 'onOpen'));
         $this->server->on('Message', array($this, 'onMessage'));
         $this->server->on('Close', array($this, 'onClose'));
@@ -46,24 +46,6 @@ class WebSocket
         $this->server->start();
     }
 
-    /*
-    * 发送
-    */
-    public function onRequest($request, $response){
-        if(!isset($request->get)){
-            $response->end("params is null");
-            return;
-        }
-        @$wsId=$request->get['wsId'];
-        @$data=$request->get['data'];
-
-        if(empty($wsId)||empty($data)){
-            $response->end("params is null");
-        }
-        $this->server->push(intval($wsId),$data);
-        $response->end("success");
-        return;
-    }
 
     /**
      * 客户端启动时回调.
@@ -72,12 +54,9 @@ class WebSocket
      */
     public function onOpen($server, $request)
     {
-        swoole_set_process_name(sprintf('websocket %s process', 'master'));
+        echo $request->fd . '连接了' . PHP_EOL;//打印到我们终端
 
-        $clientId = $request->fd;
-        $server->push($clientId, json_encode(['wsId' => $clientId]));
-
-        print_r(date('Y-m-d H:i:s', time()).'-------Connection Open:'.$clientId."\n");
+        $this->connectList[] = $request->fd;//将请求对象上的fd，也就是客户端的唯一标识，可以把它理解为客户端id，存入集合中
     }
 
     /**
@@ -88,6 +67,13 @@ class WebSocket
     public function onMessage($server, $frame)
     {
         //print_r(date('Y-m-d H:i:s', time()).'--------Get Message from: '.$frame->fd."\n");
+        echo $frame->fd . '来了，说：' . $frame->data . PHP_EOL;//打印到我们终端
+        echo '在人数' . json_encode($this->connectList) . PHP_EOL;//打印到我们终端
+        //将这个用户的信息存入集合
+        foreach ($this->connectList as $fd) {//遍历客户端的集合，拿到每个在线的客户端id
+            //将客户端发来的消息，推送给所有用户，也可以叫广播给所有在线客户端
+            $server->push($fd, json_encode(['no' => $frame->fd, 'msg' => $frame->data]));
+        }
     }
 
     /**
@@ -99,7 +85,8 @@ class WebSocket
      */
     public function onClose($server, $fd, $fromId)
     {
-        print_r(date('Y-m-d H:i:s', time()).'--------Connection Close: '.$fd."\n");
+        echo $fd . '走了' . PHP_EOL;//打印到我们终端
+        $this->connectList = array_diff($this->connectList, [$fd]);//将断开了的客户端id，清除出集合
     }
 }
 
