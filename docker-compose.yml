@@ -1,7 +1,7 @@
 version: '2'
 services:
   socket:
-    image: 630176705/mywork：swoole
+    image: 630176705/mywork:swoole
     restart: always
     volumes:
       - $PWD:/var/www/html
@@ -9,3 +9,14 @@ services:
       - 9500:9500
     labels:
       io.rancher.scheduler.affinity:host_label: env=test
+#version: '2'
+#services:
+#  socket:
+#    image: registry.fzhxkj.com/uyiban-freshmanlive-socket:0.3
+#    restart: always
+#    volumes:
+#      - $PWD:/var/www/html
+#    ports:
+#      - 9500:9500
+#    labels:
+#      io.rancher.scheduler.affinity:host_label: env=test
