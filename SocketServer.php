@@ -55,8 +55,9 @@ class WebSocket
     public function onOpen($server, $request)
     {
         echo $request->fd . '连接了' . PHP_EOL;//打印到我们终端
-
-        $this->connectList[] = $request->fd;//将请求对象上的fd，也就是客户端的唯一标识，可以把它理解为客户端id，存入集合中
+        print_r('request:'.$request->get."\n");
+        print_r('name:'.$request->get['name']."\n");
+        $this->connectList[$request->fd] = $request->get['name'];//将请求对象上的fd，也就是客户端的唯一标识，可以把它理解为客户端id，存入集合中
     }
 
     /**
@@ -67,12 +68,12 @@ class WebSocket
     public function onMessage($server, $frame)
     {
         //print_r(date('Y-m-d H:i:s', time()).'--------Get Message from: '.$frame->fd."\n");
-        echo $frame->fd . '来了，说：' . $frame->data . PHP_EOL;//打印到我们终端
+        echo $this->connectList[$frame->fd] . '来了，说：' . $frame->data . PHP_EOL;//打印到我们终端
         echo '在人数' . json_encode($this->connectList) . PHP_EOL;//打印到我们终端
         //将这个用户的信息存入集合
-        foreach ($this->connectList as $fd) {//遍历客户端的集合，拿到每个在线的客户端id
+        foreach ($this->connectList as $fd => $name) {//遍历客户端的集合，拿到每个在线的客户端id
             //将客户端发来的消息，推送给所有用户，也可以叫广播给所有在线客户端
-            $server->push($fd, json_encode(['no' => $frame->fd, 'msg' => $frame->data]));
+            $server->push($fd, json_encode(['name' => $this->connectList[$frame->fd], 'msg' => $frame->data]));
         }
     }
 
@@ -86,7 +87,7 @@ class WebSocket
     public function onClose($server, $fd, $fromId)
     {
         echo $fd . '走了' . PHP_EOL;//打印到我们终端
-        $this->connectList = array_diff($this->connectList, [$fd]);//将断开了的客户端id，清除出集合
+        unset($this->connectList[$fd]);//将断开了的客户端id，清除出集合
     }
 }
 

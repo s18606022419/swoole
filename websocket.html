@@ -18,6 +18,8 @@
 
 </textarea>
 
+<input type="text" id="v_name" value="">
+
 <input type="button" value="连接" onClick="link()">
 
 <input type="button" value="断开" onClick="dis()">
@@ -29,16 +31,27 @@
 <script>
 
     function link(){
+        var name = $('#v_name').val();
 
-        var url='ws://192.168.0.179:9500';
+        if (!name) {
+            alert('请输入名称');
+        }
+
+        var url='ws://192.168.0.179:9500?name='+name;
 
         socket=new WebSocket(url);
 
-        socket.onopen=function(){log1('连接成功')}
+        socket.onopen=function(){
+            log1('连接成功')
+            $("#v_name").attr({"disabled":"disabled"});
+        }
 
         socket.onmessage=function(msg){log(msg.data);console.log(msg);}
 
-        socket.onclose=function(){log1('断开连接')}
+        socket.onclose=function(){
+            log1('断开连接')
+            $("#v_name").removeAttr("disabled");
+        }
 
     }
 
@@ -55,7 +68,8 @@
     }
     function log(var1){
       var  v=$.parseJSON(var1)
-        $('.log').append('用户'+v['no']+'说:'+v['msg']+'\r\n');
+      console.log('接收数据'+var1)
+      $('.log').append('用户'+v['name']+'说:'+v['msg']+'\r\n');
     }
 
     function send(){
