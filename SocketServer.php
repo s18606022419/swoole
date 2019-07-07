@@ -42,7 +42,7 @@ class WebSocket
         $this->server->on('Open', array($this, 'onOpen'));
         $this->server->on('Message', array($this, 'onMessage'));
         $this->server->on('Close', array($this, 'onClose'));
-        
+        echo 'start...................';
         $this->server->start();
     }
 
